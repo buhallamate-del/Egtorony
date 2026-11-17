@@ -1255,10 +1255,13 @@ const VILAGOK=[
   ['lo:jart','Kísérleti Lőtér','../Kiserleti_robbantas/','Rakéták 1957-ből. Valaki más is fel akar jutni az égbe, csak nem lépcsőn.'],
   ['r3:jart','Raktár 3D','../raktar-3d/','Egy raktár, ahol a polcok is tornyok, csak a targoncák másznak rajtuk.'],
   ['mo:jart','Mézország','../Mezorszag/','Kaptárak egy alföldi akácos szélén. A csillagméhek a torony mellett húznak el, fölfelé.'],
+  ['me:jart','Mélység','../Melyseg/','A torony tükörképe: lefelé, a Föld közepéig. Ott a nyomás az ellenfél, nem a harcos.'],
+  ['jt:jart','Jeltörő','../Jel-toro/','Egy lehallgatóállomás. Az egyik adása a torony tetejéről jön, ahol a Szív megrepedt.'],
+  ['tt:jart','Toldaléktorony','../Toldalektorony/','A torony testvére: ott emeletenként a jelentés nő.'],
 ];
 function vilagokPanel(){
   const n=univ.get(),jart=VILAGOK.filter(v=>n[v[0]]);
-  const ajandek=[['eh:egg:egtorony',20,'Egy fekete lyuk mögötti buborékban rád találtak: +20 emlékpont.'],['eh:horizont',15,'Egy eseményhorizont mögül visszhang érkezik: +15 emlékpont.'],['lo:moon',15,'Valaki rakétával a Holdra jutott. A Szív megremeg: +15 emlékpont.'],['mo:videk',10,'Égi virágpor hullik a toronyra egy távoli méhesből: +10 emlékpont.'],['r3:feketelyuk',10,'Egy raktár pohármosójában apró fekete lyuk nyílt. A torony árnyéka egy pillanatra elhajlik: +10 emlékpont.']];
+  const ajandek=[['eh:egg:egtorony',20,'Egy fekete lyuk mögötti buborékban rád találtak: +20 emlékpont.'],['eh:horizont',15,'Egy eseményhorizont mögül visszhang érkezik: +15 emlékpont.'],['lo:moon',15,'Valaki rakétával a Holdra jutott. A Szív megremeg: +15 emlékpont.'],['mo:videk',10,'Égi virágpor hullik a toronyra egy távoli méhesből: +10 emlékpont.'],['me:kozep',15,'A Föld közepén fehér fény árad: a torony alapjai megremegnek, +15 emlékpont.'],['jt:jel',15,'Egy adás a jövőből: „Ne add fel, megéri.” +15 emlékpont.'],['r3:feketelyuk',10,'Egy raktár pohármosójában apró fekete lyuk nyílt. A torony árnyéka egy pillanatra elhajlik: +10 emlékpont.']];
   let uz='';for(const [k,db,sz] of ajandek)if(n[k]&&univ.set('eg:ajandek:'+k)){S.meta.pts+=db;uz+='<p class="muted" style="font-size:13px">'+sz+'</p>'}
   if(!jart.length&&!S.meta.heart)return uz?'<section class="panel">'+uz+'</section>':'';
   let h='<section class="panel" style="border-color:#7a5cff"><h2 style="font-size:20px">Más világok</h2>'+uz;
