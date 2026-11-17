@@ -471,6 +471,15 @@ const EVENTS=['gyumolcs','remete','terem','kihivo','kut','tanitvany','szikla','t
 // ---------- állapot ----------
 function freshMeta(){return {pts:0,total:0,up:{},runs:0,best:0,wins:0,schools:['szel'],school:'szel',asc:0,maxAsc:0,masters:{},path:null,karma:0,lines:[],journal:[],legend:false}}
 let S={meta:freshMeta(),run:null};
+// Közös napló a játékaim között (Eseményhorizont, Kísérleti Lőtér, Raktár 3D, Égtorony, Mézország). Mind ugyanazon a
+// webcímen fut (buhallamate-del.github.io), ezért a böngésző tárhelye közös: amit az egyikben elérsz, a másik is látja.
+const UNIV_KEY='univerzum-naplo';
+const univ={
+  get(){try{return JSON.parse(localStorage.getItem(UNIV_KEY))||{}}catch(_){return {}}},
+  has(k){return !!this.get()[k]},
+  set(k){const n=this.get();if(n[k])return false;n[k]=Date.now();try{localStorage.setItem(UNIV_KEY,JSON.stringify(n))}catch(_){}return true},
+};
+univ.set('eg:jart');
 let C=null;
 let prev={}, armed=null;
 const lv=id=>S.meta.up[id]||0;
@@ -866,21 +875,21 @@ function winCombat(){
   r.hp=Math.min(r.maxhp,r.hp+r.maxhp*(.2-(A(2)?.1:0)+(has('fu')?.15:0)+.04*lv('gyogy')));
   if(t==='elit')r.elites++;
   if(t==='boss'){r.bosses++;r.hp=r.maxhp;if(lv('urolo'))addPL(.1*lv('urolo'));if(ab('robbanas'))r.pl*=1.3;const shg=C.e.heart?0:f===30?2:1;if(shg){addSh(shg);r.shGot=(r.shGot||0)+shg}}
-  if(C.e.heart&&!S.meta.heart){S.meta.heart=true;jot('Legyőzted az Égtorony Szívét. Bodor szabad.');flash('<b>A Szív megreped.</b> A láncok fénye kialszik, és valaki a nevedet mondja. Szállj le a torony lábához, a krónika folytatódik.')}
+  if(C.e.heart&&!S.meta.heart){S.meta.heart=true;univ.set('eg:sziv');jot('Legyőzted az Égtorony Szívét. Bodor szabad.');flash('<b>A Szív megreped.</b> A láncok fénye kialszik, és valaki a nevedet mondja. Szállj le a torony lábához, a krónika folytatódik.')}
   if(zen&&!r.zenJ){r.zenJ=1;jot('Félholtan feltápászkodtál: ×2,5 erőt nyertél a harcból ('+big(r.pl-amt)+' → '+big(r.pl)+').')}
   if(t==='torna'&&r.torna<3){r.torna++;r.hp=Math.min(r.maxhp,r.hp+r.maxhp*.3);startCombat('torna');C.last={sys:['A bemondó üvölt: „Továbbjutott! Jöjjön '+az(r.torna)+' '+r.torna+'. forduló!” +'+cr+' kristály, +30% életerő.']};C.intro=false;return}
   if(t==='torna'){addRelic(r,'bajnok');r.torna=0;jot('Megnyerted az Égi Bajnokságot.');flash('„Az Égi Bajnokság győztese… itt áll előttünk!” A tömeg tombol, a lelátó remeg. A Bajnoki öv a tiéd: '+RELICS.bajnok.d)}
   if(t==='rival'){const w=rv().wins;rv().wins++;jot('Legyőzted Vörös Kendét ('+rv().wins+'. győzelem). '+RIVAL.win[Math.min(3,w)]);flash(RIVAL.win[Math.min(3,w)]+(rv().wins===3?' Vörös Kende mostantól a szövetségesed: a körzetek urainál egyszer közbelép.':''))}
   if(t==='trail'&&r.trail>1){r.trail--;r.hp=Math.min(r.maxhp,r.hp+r.maxhp*.05);startCombat('trail');C.last={sys:['Az ösvény folytatódik: még '+r.trail+' őr. +'+cr+' kristály.']};C.intro=false;return}
   if(t==='trial'){const id=r.pending;S.meta.masters[id]=2;jot('Teljesítetted '+MASTERS[id].n+' próbáját.');flash(MASTERS[id].n+' elismerően biccent. „Legközelebb tanítalak.”')}
-  if(t==='temple'){if(!S.meta.schools.includes('negy'))S.meta.schools.push('negy');jot(S.meta.legend?'Ismét legyőzted a Négy Mestert.':'Legyőzted a Négy Mestert a templomban. Legenda lettél.');S.meta.legend=true;r.temple=true;r.screen='victory';C=null;r.c=null;return}
+  if(t==='temple'){univ.set('eg:legenda');if(!S.meta.schools.includes('negy'))S.meta.schools.push('negy');jot(S.meta.legend?'Ismét legyőzted a Négy Mestert.':'Legyőzted a Négy Mestert a templomban. Legenda lettél.');S.meta.legend=true;r.temple=true;r.screen='victory';C=null;r.c=null;return}
   r.rew={t,cr,gain,er,amt,zen,opts:genReward(t==='rival'?'elit':t)};C=null;r.c=null;
   if(t==='trail'){const fr=shuffle(relicPool().filter(x=>!r.relics.includes(x))).slice(0,2).map(id=>({k:'relic',id}));r.rew.opts=[...fr,{k:'pl',v:.4}];r.trail=0}
   if(t==='mirror')r.rew.opts.unshift({k:'pl',v:.3});
   if(t==='boss'&&f===30&&!r.won&&VE()){r.won=true;jot('Végtelen torony: túljutottál a 30. emeleten, erőszint '+big(r.pl)+'. Innen nincs plafon.')}
   if(t==='boss'&&f===30&&!r.won){
     jot((S.meta.wins?'Ismét a csúcson':'Először értél a csúcsra')+(r.asc?' ('+r.asc+'. nehézség)':'')+', erőszint: '+plf(r.pl)+'.');
-    r.won=true;S.meta.wins++;S.meta.maxAsc=Math.max(S.meta.maxAsc||0,Math.min(8,(r.asc||0)+1));S.meta.best=Math.max(S.meta.best,30);
+    r.won=true;S.meta.wins++;univ.set('eg:csucs');S.meta.maxAsc=Math.max(S.meta.maxAsc||0,Math.min(8,(r.asc||0)+1));S.meta.best=Math.max(S.meta.best,30);
     r.screen='victory';return;
   }
   r.screen='reward';
@@ -1234,6 +1243,24 @@ function journeyPanel(){
   h+='<button class="btn" data-a="copylog"><b>Napló másolása</b><small>Szöveges összefoglaló a vágólapra: rang, mesterek, emlékek és az utolsó tíz mászás. Beillesztheted a beszélgetésbe.</small></button>';
   if(copyText)h+='<p class="muted" style="font-size:13px">'+copyMsg+'</p><textarea id="logtxt" readonly rows="8" style="width:100%;background:#0e1029;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.4 var(--f-body)">'+copyText.replace(/</g,'&lt;')+'</textarea>';
   if((m.journal||[]).length)h+='<details class="help"><summary>Útinapló</summary><ul>'+m.journal.map(j=>'<li>'+j+'</li>').join('')+'</ul></details>';
+  return h+'</section>'+vilagokPanel();
+}
+// Más világok: a többi játékom, ha már jártál bennük (vagy ha a torony teteje megmutatja őket); egyszeri ajándékok
+const VILAGOK=[
+  ['eh:jart','Eseményhorizont','../Esemenyhorizont/','Egy hajó egy fekete lyuk körül. A torony tetejéről éjjel látszik a fénygyűrűje: az a csillag, amelyik nem pislákol, hanem elhajlik.'],
+  ['lo:jart','Kísérleti Lőtér','../Kiserleti_robbantas/','Rakéták 1957-ből. Valaki más is fel akar jutni az égbe, csak nem lépcsőn.'],
+  ['r3:jart','Raktár 3D','../raktar-3d/','Egy raktár, ahol a polcok is tornyok, csak a targoncák másznak rajtuk.'],
+  ['mo:jart','Mézország','../Mezorszag/','Kaptárak egy alföldi akácos szélén. A csillagméhek a torony mellett húznak el, fölfelé.'],
+];
+function vilagokPanel(){
+  const n=univ.get(),jart=VILAGOK.filter(v=>n[v[0]]);
+  const ajandek=[['eh:horizont',15,'Egy eseményhorizont mögül visszhang érkezik: +15 emlékpont.'],['lo:moon',15,'Valaki rakétával a Holdra jutott. A Szív megremeg: +15 emlékpont.'],['mo:videk',10,'Égi virágpor hullik a toronyra egy távoli méhesből: +10 emlékpont.'],['r3:feketelyuk',10,'Egy raktár pohármosójában apró fekete lyuk nyílt. A torony árnyéka egy pillanatra elhajlik: +10 emlékpont.']];
+  let uz='';for(const [k,db,sz] of ajandek)if(n[k]&&univ.set('eg:ajandek:'+k)){S.meta.pts+=db;uz+='<p class="muted" style="font-size:13px">'+sz+'</p>'}
+  if(!jart.length&&!S.meta.heart)return uz?'<section class="panel">'+uz+'</section>':'';
+  let h='<section class="panel" style="border-color:#7a5cff"><h2 style="font-size:20px">Más világok</h2>'+uz;
+  if(S.meta.heart)h+='<p class="muted" style="font-size:13px">A Szív megrepedése óta a torony tetejéről éjjel egy furcsa csillag látszik: nem pislákol, hanem a fénye körbehajlik.</p>';
+  h+=jart.map(v=>'<p class="muted" style="font-size:13px"><b style="color:var(--ink)">'+v[1]+'.</b> '+v[3]+'</p>').join('');
+  h+='<div class="choices">'+VILAGOK.filter(v=>n[v[0]]||(v[0]==='eh:jart'&&S.meta.heart)).map(v=>'<a class="btn" href="'+v[2]+'"><b>'+v[1]+' ↗</b></a>').join('')+'</div>';
   return h+'</section>';
 }
 let titleTab='maszas',metaBranch='Erő';
